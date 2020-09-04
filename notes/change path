@@ -1,0 +1,9 @@
+to vieew the current path
+echo $PATH
+
+to change the path of executable so that we can execute a file 
+export PATH="/dev/shm:$PATH"
+
+
+to be able to use clear in interactive webshell use 
+export TERM=xterm 
