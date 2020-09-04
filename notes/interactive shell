@@ -1,0 +1,11 @@
+to make shell interactive (means afetr hitting ctrl+C it still exist there)
+
+    $ python3 -c 'import pty; pty.spawn("/bin/bash")'
+    Ctrl+Z
+    $ stty raw -echo
+    $ fg
+follow the following command
+
+
+
+
