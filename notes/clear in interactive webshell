@@ -1,0 +1,2 @@
+to be able to use clear in interactive webshell use 
+export TERM=xterm 
