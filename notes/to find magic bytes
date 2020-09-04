@@ -1,0 +1,5 @@
+to find magic bytes upto specific limit*(i.e 20)
+head -c 20 file name |xxd
+
+to pipe these bytes into different file
+head -c 20 file name > filename2
