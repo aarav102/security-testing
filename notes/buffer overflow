@@ -1,0 +1,43 @@
+to do buffer overflow
+step 1:-simply run the executable with more argument and check if there is 
+        segmentataion fault , if there is segmentation fault then buffer 
+        overflow can happen
+step 2:- checking if aslr is enabled or not
+         The ASLR (Address Space Layout Randomization) is a method used 
+         to randomize the position of the heap, stack, executable and 
+         libraries in the memory.It is a method of preventing buffer overflow.
+         [-] checking
+         check ASLR on the host  by checking from /proc/sys/kernel/randomize_va_space
+         and looking its output
+         [-]to print the shared library required by the program use ldd cmommand
+          ldd filename 
+         eg- ldd /usr/local/bin/ovrflw | grep libc (to grep only libc library grep libc is used)
+             libc.so.6 => /lib/i386-linux-gnu/libc.so.6 (0xb75b1000)
+step 3:-checking type of buffer overflow attack you have to do 
+        
+        [-]checksec filename (checksec will print the properties of file/program/executable)
+        [*] '/media/sf_CTFs/hackthebox/october-10.10.10.16/ovrflw'
+        Arch:     i386-32-little
+        RELRO:    Partial RELRO
+        Stack:    No canary found
+        NX:       NX enabled
+        PIE:      No PIE (0x8048000)
+        
+        (now NX is enabled which means we cant run shell code directly as this program is in non-executable 
+        stack)
+        
+        1:-when NX is not enabled this will be structure we will made for attack
+        Buffer overflow smashing EIP and jumping forward to shellcode
+        |-------------------|-----------|------------|---------------------------| 
+                      AAAAAAAAAAAA      |    RET     |        SHELLCODE           
+        |-------------------|-----------|------------|---------------------------| 
+                         args              EBP         EIP 
+        
+        
+        2:- when NX is enabled
+        Buffer overflow doing return-to-libc and executing system function                                                   
+        |-------------------------------|------------|--------------|------------| 
+        |            buffer             |   system   |   fake_ret   |   /bin/sh  | 
+        |-------------------------------|------------|--------------|------------| 
+                     args                  EBP           EIP
+                     
