@@ -11,6 +11,8 @@ step 2:- checking if aslr is enabled or not
          and looking its output
          [-]to print the shared library required by the program use ldd cmommand
           ldd filename 
+          The command ​ ldd /usr/local/bin/overflw | grep libc​ will get the libc address of 
+          the binary as well as the path to the libc library
          eg- ldd /usr/local/bin/ovrflw | grep libc (to grep only libc library grep libc is used)
              libc.so.6 => /lib/i386-linux-gnu/libc.so.6 (0xb75b1000)
 step 3:-checking type of buffer overflow attack you have to do 
@@ -41,5 +43,5 @@ step 3:-checking type of buffer overflow attack you have to do
         |-------------------------------|------------|--------------|------------| 
                      args                  EBP           EIP
                      
-                     https://blog.rapid7.com/2019/02/19/stack-based-buffer-overflow-attacks-what-you-need-to-know/
+                     
                      
