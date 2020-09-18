@@ -118,6 +118,7 @@ step 3:-checking type of buffer overflow attack you have to do
         "\x60\xb2\x62\xb7 " + "\xac\xab\x75\xb7"'); done
         this is done in loop as aslr is active 
          
-        
+       ref:- 1--https://blog.rapid7.com/2019/02/19/stack-based-buffer-overflow-attacks-what-you-need-to-know/
+             2--https://0xdf.gitlab.io/2019/03/26/htb-october.html
                      
                      
