@@ -5,7 +5,7 @@ to change the path of executable so that we can execute a file
 export PATH="/dev/shm:$PATH"
 
 change path of python execution 
-
+sudo PYTHONPATH=~/fakelib /opt/scripts/admin_tasks.sh (/fakelib is the path you have changed and /opt/.... is the file you wanted to execute)
 
 
 to be able to use clear in interactive webshell use 
