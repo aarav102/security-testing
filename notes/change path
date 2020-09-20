@@ -4,6 +4,9 @@ echo $PATH
 to change the path of executable so that we can execute a file 
 export PATH="/dev/shm:$PATH"
 
+change path of python execution 
+
+
 
 to be able to use clear in interactive webshell use 
 export TERM=xterm 
