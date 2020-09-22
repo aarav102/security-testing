@@ -1,0 +1,2 @@
+use cewl tool
+ cewl -w wordlist.txt http://10.10.10.191/
