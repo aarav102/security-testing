@@ -1,3 +1,8 @@
 sudo -l is used to check which application the current user can run 
 if it can run a particular application then exploit that application like privilege 
-escalation 
+escalation using python library hijack 
+
+if it can run all application as root
+use :- su -l#-1/bin/bash 
+where 
+#-1 is for exploiting any vulernable application in machine and automatically giving root access
