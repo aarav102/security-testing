@@ -1,0 +1,3 @@
+sudo -l is used to check which application the current user can run 
+if it can run a particular application then exploit that application like privilege 
+escalation 
